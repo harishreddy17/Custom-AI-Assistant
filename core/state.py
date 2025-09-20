@@ -1,3 +1,4 @@
+# core/state.py
 from typing import TypedDict
 
 class AssistantState(TypedDict, total=False):
@@ -6,4 +7,4 @@ class AssistantState(TypedDict, total=False):
     debug_response: str
     explain_response: str
     file_saved: str
-    execution_output: str
+    saved_filename: str
