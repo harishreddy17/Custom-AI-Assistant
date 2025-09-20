@@ -1,0 +1,2 @@
+[console_scripts]
+cursor-ai = cursor_ai.cli:start_cli

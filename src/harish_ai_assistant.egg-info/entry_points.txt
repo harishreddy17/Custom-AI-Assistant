@@ -1,0 +1,2 @@
+[console_scripts]
+harsh-ai-assistant = harish_ai_assistant.cli:start_cli

@@ -1,0 +1,8 @@
+openai
+opencv-python
+matplotlib
+numpy
+pyyaml
+python-dotenv
+langchain
+langgraph

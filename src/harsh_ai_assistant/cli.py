@@ -2,7 +2,8 @@
 import subprocess
 import os
 import time
-from src.cursor_ai.graph import app
+import sys
+from harsh_ai_assistant.graph import app
 
 VALID_NODES = {"codegen", "debug", "explain"}
 
@@ -115,13 +116,28 @@ Notes:
   - Generated files are saved in ./generated/<timestamp>-<query>/.
 """))
 
-def start_cli():
-    print(cgreen("🤖 Cursor-AI Assistant (Interactive CLI)"))
+def start_cli(single_query: str = None):
+    print(cgreen("🤖 Harsh-AI Assistant (Interactive CLI)"))
     print("Type 'help' for commands. Type 'exit' to quit.\n")
 
     last_result = {}
     last_saved_filename = ""
 
+    # Single-line execution (like: harsh_ai_assistant "query")
+    if single_query:
+        result = app.invoke({
+            "codegen_query": single_query,
+            "debug_query": single_query,
+            "explain_query": single_query
+        })
+        last_result = result or {}
+        folder, saved_files = save_outputs(single_query, last_result)
+        last_saved_filename = saved_files.get("codegen") or ""
+        print(cgreen(f"✅ Saved outputs to {folder}"))
+        print(last_result.get("file_saved") or last_result.get("codegen_response") or "(no output)")
+        return
+
+    # Interactive loop
     while True:
         try:
             text = input("> ").strip()
@@ -135,17 +151,14 @@ def start_cli():
         parts = text.split()
         cmd = parts[0].lower()
 
-        # help
         if cmd in {"help", "h", "?"}:
             _print_help()
             continue
 
-        # exit
         if cmd in {"exit", "quit"}:
             print(cgreen("Goodbye 👋"))
             break
 
-        # show node
         if cmd == "show" and len(parts) >= 2:
             node = parts[1].lower()
             if node not in VALID_NODES:
@@ -154,25 +167,23 @@ def start_cli():
             show_file(node)
             continue
 
-        # explicit generate -> always new file
         if cmd == "generate":
             query = text[len("generate"):].strip()
             if not query:
                 print(cyellow("Provide a query after 'generate'."))
                 continue
-            result = app.invoke({"query": query})
+            result = app.invoke({
+                "codegen_query": query,
+                "debug_query": query,
+                "explain_query": query
+            })
             last_result = result or {}
-
             folder, saved_files = save_outputs(query, last_result)
             last_saved_filename = saved_files.get("codegen") or last_saved_filename
             print(cgreen(f"✅ Saved outputs to {folder}"))
-
-            output = last_result.get("file_saved") or last_result.get("codegen_response") \
-                     or last_result.get("debug_response") or last_result.get("explain_response")
-            print(output or cyellow("No response from assistant."))
+            print(last_result.get("file_saved") or last_result.get("codegen_response") or "(no output)")
             continue
 
-        # run filename or last saved
         if cmd == "run":
             filename = " ".join(parts[1:]).strip() if len(parts) >= 2 else last_saved_filename
             if not filename:
@@ -181,32 +192,41 @@ def start_cli():
             print(_run_python_file(filename))
             continue
 
-        # lastfile
         if cmd == "lastfile":
             print(cgreen(last_saved_filename or "No saved file yet."))
             continue
 
-        # raw (debug)
         if cmd == "raw":
             print(last_result or cyellow("No last result."))
             continue
 
-        # default: plain query -> edit last saved file
+        # Default: treat as query for follow-up edit
         query = text
         filename_to_edit = last_saved_filename if last_saved_filename else None
-
         previous_code = None
         if filename_to_edit and os.path.exists(filename_to_edit):
             with open(filename_to_edit, "r", encoding="utf-8") as f:
                 previous_code = f.read()
 
-        result = app.invoke({"query": query, "previous_code": previous_code})
+        result = app.invoke({
+            "codegen_query": query,
+            "debug_query": query,
+            "explain_query": query,
+            "previous_code": previous_code
+        })
         last_result = result or {}
-
         folder, saved_files = save_outputs(query, last_result, filename_override=filename_to_edit)
         last_saved_filename = filename_to_edit or last_saved_filename
         print(cgreen(f"✅ Saved outputs to {folder}"))
+        print(last_result.get("file_saved") or last_result.get("codegen_response") or "(no output)")
 
-        output = last_result.get("file_saved") or last_result.get("codegen_response") \
-                 or last_result.get("debug_response") or last_result.get("explain_response")
-        print(output or cyellow("No response from assistant."))
+# ---------------- ENTRY POINT ---------------- #
+def main():
+    if len(sys.argv) > 1:
+        query = " ".join(sys.argv[1:]).strip()
+        start_cli(single_query=query)
+    else:
+        start_cli()
+
+if __name__ == "__main__":
+    main()
