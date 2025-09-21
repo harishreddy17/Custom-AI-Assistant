@@ -1,0 +1,17 @@
+local test
+pip install -e .
+harish-ai
+pip uninstall harish-ai
+
+
+
+
+rm -r dist/*
+Remove-Item -Recurse -Force dist\*
+python -m build
+python -m twine upload dist/*
+
+install on anywhere
+pip install harish-ai-assist==0.1.1
+
+harish-ai

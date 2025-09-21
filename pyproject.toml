@@ -1,15 +1,17 @@
 [project]
-name = "cursor-ai"
-version = "0.1.0"
-description = "Interactive AI code generator"
+name = "harish-ai-assist"  # name shown on PyPI (can stay hyphenated)
+version = "0.1.1"
+description = "Interactive AI code generator with CLI"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "openai",
     "opencv-python",
     "matplotlib",
-    "numpy"
+    "numpy",
+    "langchain",
+    "langgraph"
 ]
 
 [project.scripts]
-cursor-ai = "cursor_ai.cli:start_cli"
+harish-ai = "harish_ai_assistant.cli:start_cli"
